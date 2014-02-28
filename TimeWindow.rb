@@ -11,6 +11,10 @@ class TimeWindow
 	def parse_multi(time)
 		time_window_list = []
 
+		if time.strip=="" 
+			return time_window_list
+		end
+
 		if time[/\;/]
 			multi_range = time.split(";")
 			multi_range.each do |m|
@@ -42,13 +46,13 @@ class TimeWindow
 					day = @@days[i]
 					# Set default time range.
 					time_window["#{day}"] ||=[]
-					time_window["#{day}"] << { "start" => "0", "end" => "235959" }
+					time_window["#{day}"] << { "start" => "0", "end" => "240000" }
 				end
 				for i in 0..end_index
 					day = @@days[i]
 					# Set default time range.
 					time_window["#{day}"] ||=[]
-					time_window["#{day}"] << { "start" => "0", "end" => "235959" }
+					time_window["#{day}"] << { "start" => "0", "end" => "240000" }
 				end
 
 			else
@@ -56,7 +60,7 @@ class TimeWindow
 					day = @@days[i]
 					# Set default time range.
 					time_window["#{day}"] ||= []
-					time_window["#{day}"] << { "start" => "0", "end" => "235959" }
+					time_window["#{day}"] << { "start" => "0", "end" => "240000" }
 				end
 			end
 		# Contains seperate days. Weaker condition.
@@ -81,38 +85,18 @@ class TimeWindow
 					range_lists<<{"start"=>"","end"=>""}
 				end
 			end
-
 			# debugger
 			# p "time_ranges size: #{time_ranges.size}, range_lists size: #{time_window.values.first.size}"
-
 			time_ranges.each_with_index do |time_range, index|
 				time_string = time_range.split("-")
 				start_time = time_string[0]
 				end_time = time_string[1]
 				time_window.each do |day, range_lists|
 					# debugger
-					range_lists[index]["start"] =start_time
-					range_lists[index]["end"]  = end_time
+					range_lists[index]["start"] =start_time+"00"
+					range_lists[index]["end"]  = end_time+"00"
 				end
 			end
-
-
-
-
-
-
-			# time_window.each do |day, range_lists|
-			# 	range_lists.each_with_index do |time_hash, index|
-			# 		# debugger
-			# 		time_string = time_ranges[index].split("-")
-			# 		start_time = time_string[0]
-			# 		end_time = time_string[1]
-			# 		# debugger
-			# 		time_hash["start"] =start_time
-			# 		time_hash["end"]  = end_time
-			# 	end
-			# end
-			
 
 		# Contains only one time range, weaker condition.
 		elsif time[/\d{4}-\d{4}/]
@@ -122,32 +106,64 @@ class TimeWindow
 			end_time = time_string[1]
 			time_window.each do |day, range_lists|
 				range_lists.each do |l|
-					l["start"] = start_time
-					l["end"] = end_time
+					l["start"] = start_time+"00"
+					l["end"] = end_time+"00"
 				end
 			end
 		end
 		
-		puts "Time window for: #{time}"
+		# puts "Time window for: #{time}"
 
-		time_window.each do |day, time|
-			puts "#{day}   #{time}"
-		end
-
-
+		# time_window.each do |day, time|
+		# 	puts "#{day}   #{time}"
+		# end
+		time_window
 	end
-
 
 	def include?(time)
+		# debugger
 		return true if @time_window.empty?
 
-		hour = time.hour
-		min = time.min
+		day = ""
+		if time.sunday?
+			day = "Sun"
+		elsif time.monday?
+			day = "Mon"
+		elsif time.tuesday?
+			day = "Tue"
+		elsif time.wednesday?
+			day = "Wed"
+		elsif time.thursday?
+			day = "Thu"
+		elsif time.friday?
+			day = "Fri"
+		elsif time.saturday?
+			day = "Sat"
+		end
 
+		time_string = time.strftime "%H%M%S"
+
+		# debugger
+		result = false
+
+		@time_window.each do |time_range|
+			# Day matching.
+			time_range.each do |day_in_window, range_lists|
+				if day==day_in_window
+					range_lists.each do |time_hash|
+						start_time  = time_hash["start"]
+						end_time = time_hash["end"]
+
+						if time_string.to_i>=start_time.to_i && time_string.to_i<end_time.to_i
+							result = true
+							return result
+						end
+
+					end
+				end
+			end
+		end
+		# p 'sss'
+		result 
 	end
-
-	
-
-
-
 end
